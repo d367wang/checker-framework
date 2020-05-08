@@ -685,6 +685,67 @@ public class CFGBuilder {
 
             return false;
         }
+
+        /**
+         * Given a type of thrown exception, add the set of pairs of caught exception and its
+         * possible control flow successor {@link Label}s to the argument set. Return true if the
+         * exception is known to be caught by one of those labels and false if it may propagate
+         * still further.
+         */
+        public boolean possibleLabels(TypeMirror thrown, Set<Pair<TypeMirror, Label>> labels) {
+
+            while (!(thrown instanceof DeclaredType)) {
+                assert thrown instanceof TypeVariable
+                        : "thrown type must be a variable or a declared type";
+                thrown = ((TypeVariable) thrown).getUpperBound();
+            }
+            DeclaredType declaredThrown = (DeclaredType) thrown;
+            assert thrown != null : "thrown type must be bounded by a declared type";
+
+            for (Pair<TypeMirror, Label> pair : catchLabels) {
+                TypeMirror caught = pair.first;
+
+                if (caught instanceof DeclaredType) {
+                    DeclaredType declaredCaught = (DeclaredType) caught;
+                    if (types.isSubtype(declaredThrown, declaredCaught)) {
+                        // When thrown is a subtype of caught, then thrown is guaranteed to be
+                        // caught by current catch block or one of the precedings instead of going
+                        // further
+                        Pair<TypeMirror, Label> matchLabel = Pair.of(thrown, pair.second);
+                        labels.add(matchLabel);
+                        return true;
+
+                    } else if (types.isSubtype(declaredCaught, declaredThrown)) {
+                        // When thrown is a supertype of caught, it "can apply" current catch block
+                        // the caught-label pair will be added to `labels` and the process goes
+                        // further, but the cause/label of the edge is refined to the type of caught
+                        // exception
+                        Pair<TypeMirror, Label> canApplyLabel = Pair.of(caught, pair.second);
+                        labels.add(canApplyLabel);
+                    }
+
+                } else {
+                    assert caught instanceof UnionType
+                            : "caught type must be a union or a declared type";
+                    UnionType caughtUnion = (UnionType) caught;
+                    for (TypeMirror alternative : caughtUnion.getAlternatives()) {
+                        assert alternative instanceof DeclaredType
+                                : "alternatives of an caught union type must be declared types";
+                        DeclaredType declaredAlt = (DeclaredType) alternative;
+                        if (types.isSubtype(declaredThrown, declaredAlt)) {
+                            Pair<TypeMirror, Label> matchLabel = Pair.of(thrown, pair.second);
+                            labels.add(matchLabel);
+                            return true;
+                        } else if (types.isSubtype(declaredAlt, declaredThrown)) {
+                            Pair<TypeMirror, Label> canApplyLabel =
+                                    Pair.of(alternative, pair.second);
+                            labels.add(canApplyLabel);
+                        }
+                    }
+                }
+            }
+            return false;
+        }
     }
 
     /** A TryFinallyFrame applies to exceptions of any type. */
