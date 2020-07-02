@@ -4040,20 +4040,28 @@ public class CFGBuilder {
             // basic block for the condition
             unbox(scan(tree.getCondition(), p));
 
-            ConditionalJump cjump = new ConditionalJump(thenEntry, elseEntry);
-            extendWithExtendedNode(cjump);
+            boolean isCondConstTrue = TreeUtils.isExprConstTrue(tree.getCondition());
+            boolean isCondConstFalse = TreeUtils.isExprConstFalse(tree.getCondition());
+            if (!isCondConstTrue && !isCondConstFalse) {
+                ConditionalJump cjump = new ConditionalJump(thenEntry, elseEntry);
+                extendWithExtendedNode(cjump);
+            }
 
-            // then branch
-            addLabelForNextNode(thenEntry);
-            StatementTree thenStatement = tree.getThenStatement();
-            scan(thenStatement, p);
-            extendWithExtendedNode(new UnconditionalJump(endIf));
+            if (!isCondConstFalse) {
+                // then branch
+                addLabelForNextNode(thenEntry);
+                StatementTree thenStatement = tree.getThenStatement();
+                scan(thenStatement, p);
+                extendWithExtendedNode(new UnconditionalJump(endIf));
+            }
 
-            // else branch
-            addLabelForNextNode(elseEntry);
-            StatementTree elseStatement = tree.getElseStatement();
-            if (elseStatement != null) {
-                scan(elseStatement, p);
+            if (!isCondConstTrue) {
+                // else branch
+                addLabelForNextNode(elseEntry);
+                StatementTree elseStatement = tree.getElseStatement();
+                if (elseStatement != null) {
+                    scan(elseStatement, p);
+                }
             }
 
             // label the end of the if statement
