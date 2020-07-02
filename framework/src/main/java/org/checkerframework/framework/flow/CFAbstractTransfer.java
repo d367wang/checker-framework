@@ -1,6 +1,7 @@
 package org.checkerframework.framework.flow;
 
 import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
@@ -703,6 +704,18 @@ public abstract class CFAbstractTransfer<
         V leftV = p.getValueOfSubNode(leftN);
         V rightV = p.getValueOfSubNode(rightN);
 
+        // Check if one side of the expression is of constant value false.
+        // If so, this is equivalent to a conditional NOT, so just switch the then and else store.
+        Tree leftT = leftN.getTree();
+        Tree rightT = rightN.getTree();
+        assert leftT instanceof ExpressionTree && rightT instanceof ExpressionTree;
+        if (TreeUtils.isExprConstFalse((ExpressionTree) leftT)
+                || TreeUtils.isExprConstFalse((ExpressionTree) rightT)) {
+            S thenStore = res.getThenStore();
+            S elseStore = res.getElseStore();
+            return new ConditionalTransferResult<>(res.getResultValue(), elseStore, thenStore);
+        }
+
         // if annotations differ, use the one that is more precise for both
         // sides (and add it to the store if possible)
         res = strengthenAnnotationOfEqualTo(res, leftN, rightN, leftV, rightV, false);
@@ -718,6 +731,18 @@ public abstract class CFAbstractTransfer<
         Node rightN = n.getRightOperand();
         V leftV = p.getValueOfSubNode(leftN);
         V rightV = p.getValueOfSubNode(rightN);
+
+        // Check if one side of the expression is of constant value true.
+        // If so, this is equivalent to a conditional NOT, so just switch the then and else store.
+        Tree leftT = leftN.getTree();
+        Tree rightT = rightN.getTree();
+        assert leftT instanceof ExpressionTree && rightT instanceof ExpressionTree;
+        if (TreeUtils.isExprConstTrue((ExpressionTree) leftT)
+                || TreeUtils.isExprConstTrue((ExpressionTree) rightT)) {
+            S thenStore = res.getThenStore();
+            S elseStore = res.getElseStore();
+            return new ConditionalTransferResult<>(res.getResultValue(), elseStore, thenStore);
+        }
 
         // if annotations differ, use the one that is more precise for both
         // sides (and add it to the store if possible)
