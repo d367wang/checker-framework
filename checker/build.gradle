@@ -23,6 +23,8 @@ dependencies {
     testImplementation sourceSets.testannotations.output
 
     testannotationsImplementation project(':checker-qual')
+
+    implementation 'com.google.code.gson:gson:2.8.6'
 }
 
 jar {
