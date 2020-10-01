@@ -1163,6 +1163,23 @@ public final class TreeUtils {
     }
 
     /**
+     * Returns a list of all fields of the given class.
+     *
+     * @param clazz the enclosing class {@code ClassTree} to get the fields
+     * @return the list of all the fields {@code VariableTree} declared in the given class
+     */
+    public static List<VariableTree> getAllFields(ClassTree clazz) {
+        List<VariableTree> fields = new ArrayList<>();
+        for (Tree t : clazz.getMembers()) {
+            if (t.getKind() == Tree.Kind.VARIABLE) {
+                VariableTree vt = (VariableTree) t;
+                fields.add(vt);
+            }
+        }
+        return fields;
+    }
+
+    /**
      * Determine whether the given tree represents an ExpressionTree.
      *
      * @param tree the Tree to test
