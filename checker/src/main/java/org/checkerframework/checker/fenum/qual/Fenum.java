@@ -20,4 +20,6 @@ import org.checkerframework.framework.qual.SubtypeOf;
 @SubtypeOf(FenumTop.class)
 public @interface Fenum {
     String value();
+
+    FenumPattern pattern() default FenumPattern.UNCHECKED;
 }

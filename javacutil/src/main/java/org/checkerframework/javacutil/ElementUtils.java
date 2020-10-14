@@ -117,6 +117,16 @@ public class ElementUtils {
     }
 
     /**
+     * Returns true if the element is a public element: a public field, public method, or public
+     * class.
+     *
+     * @return true if the element is public
+     */
+    public static boolean isPublic(Element element) {
+        return element.getModifiers().contains(Modifier.PUBLIC);
+    }
+
+    /**
      * Returns true if the element is a effectively final element.
      *
      * @return true if the element is effectively final
