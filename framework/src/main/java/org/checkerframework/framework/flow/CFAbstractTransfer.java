@@ -58,6 +58,7 @@ import org.checkerframework.dataflow.cfg.node.TernaryExpressionNode;
 import org.checkerframework.dataflow.cfg.node.ThisLiteralNode;
 import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
 import org.checkerframework.dataflow.cfg.node.WideningConversionNode;
+import org.checkerframework.dataflow.util.NodeUtils;
 import org.checkerframework.framework.type.AnnotatedTypeFactory;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedDeclaredType;
@@ -675,6 +676,28 @@ public abstract class CFAbstractTransfer<
     public TransferResult<V, S> visitTernaryExpression(
             TernaryExpressionNode n, TransferInput<V, S> p) {
         TransferResult<V, S> result = super.visitTernaryExpression(n, p);
+
+        if (NodeUtils.isBooleanTypeNode(n)) {
+            // System.out.println("ternary expr is boolean type");
+            S thenStore = result.getThenStore();
+            S elseStore = result.getElseStore();
+            // System.out.println("then store: " + thenStore.toString());
+            // System.out.println("else store: " + elseStore.toString());
+
+            V thenValue = p.getValueOfSubNode(n.getThenOperand());
+            V elseValue = p.getValueOfSubNode(n.getElseOperand());
+            // System.out.println("then value: " + thenValue.toString());
+            // System.out.println("else value: " + elseValue.toString());
+
+            V resultValue = null;
+            if (thenValue != null && elseValue != null) {
+                resultValue = thenValue.leastUpperBound(elseValue);
+            }
+            // System.out.println("result value: " + resultValue.toString());
+            return new ConditionalTransferResult<>(
+                    finishValue(resultValue, thenStore, elseStore), thenStore, elseStore);
+        }
+
         S store = result.getRegularStore();
         V thenValue = p.getValueOfSubNode(n.getThenOperand());
         V elseValue = p.getValueOfSubNode(n.getElseOperand());
