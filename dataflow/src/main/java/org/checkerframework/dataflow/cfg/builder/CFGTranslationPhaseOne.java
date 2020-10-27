@@ -2196,12 +2196,39 @@ public class CFGTranslationPhaseOne extends TreePathScanner<Node, Void> {
         addLabelForNextNode(trueStart);
         Node trueExpr = scan(tree.getTrueExpression(), p);
         trueExpr = conditionalExprPromotion(trueExpr, exprType);
-        extendWithExtendedNode(new UnconditionalJump(merge, Store.FlowRule.BOTH_TO_THEN));
+
+        Store.FlowRule rule;
+        if (trueExpr instanceof BooleanLiteralNode) {
+            BooleanLiteralNode literalNode = (BooleanLiteralNode) trueExpr;
+            rule =
+                    literalNode.getValue()
+                            ? Store.FlowRule.BOTH_TO_THEN
+                            : Store.FlowRule.BOTH_TO_ELSE;
+
+        } else {
+            rule = Store.FlowRule.EACH_TO_EACH;
+        }
+
+        extendWithExtendedNode(new UnconditionalJump(merge, rule));
+        // extendWithExtendedNode(new UnconditionalJump(merge, Store.FlowRule.BOTH_TO_THEN));
 
         addLabelForNextNode(falseStart);
         Node falseExpr = scan(tree.getFalseExpression(), p);
         falseExpr = conditionalExprPromotion(falseExpr, exprType);
-        extendWithExtendedNode(new UnconditionalJump(merge, Store.FlowRule.BOTH_TO_ELSE));
+
+        if (falseExpr instanceof BooleanLiteralNode) {
+            BooleanLiteralNode literalNode = (BooleanLiteralNode) falseExpr;
+            rule =
+                    literalNode.getValue()
+                            ? Store.FlowRule.BOTH_TO_THEN
+                            : Store.FlowRule.BOTH_TO_ELSE;
+
+        } else {
+            rule = Store.FlowRule.EACH_TO_EACH;
+        }
+
+        extendWithExtendedNode(new UnconditionalJump(merge, rule));
+        // extendWithExtendedNode(new UnconditionalJump(merge, Store.FlowRule.BOTH_TO_ELSE));
 
         addLabelForNextNode(merge);
         Node node = new TernaryExpressionNode(tree, condition, trueExpr, falseExpr);
