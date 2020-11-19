@@ -1092,6 +1092,7 @@ public class BaseTypeVisitor<Factory extends GenericAnnotatedTypeFactory<?, ?, ?
                 inferredAnno = hierarchy.findAnnotationInSameHierarchy(annos, annotation);
             }
 
+            /*
             System.out.println("\n\nChecking conditional post-condition");
             System.out.println("expression: " + expression.toString());
             System.out.println("annotation: " + annotation.toString());
@@ -1110,6 +1111,7 @@ public class BaseTypeVisitor<Factory extends GenericAnnotatedTypeFactory<?, ?, ?
             } else {
                 System.out.println("retVal: null");
             }
+            */
 
             if (!checkContract(expression, annotation, inferredAnno, exitStore)) {
                 checker.reportError(

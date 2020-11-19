@@ -119,6 +119,10 @@ public class ForwardAnalysisImpl<
                     RegularBlock rb = (RegularBlock) b;
                     // Apply transfer function to contents
                     TransferInput<V, S> inputBefore = getInputBefore(rb);
+
+                    System.out.println("input before block " + rb.toString() + ":");
+                    System.out.println(inputBefore.toString());
+
                     assert inputBefore != null : "@AssumeAssertion(nullness): invariant";
                     currentInput = inputBefore.copy();
                     Node lastNode = null;
@@ -136,6 +140,14 @@ public class ForwardAnalysisImpl<
                     Block succ = rb.getSuccessor();
                     assert succ != null
                             : "@AssumeAssertion(nullness): regular basic block without non-exceptional successor unexpected";
+
+                    System.out.println(
+                            "input propagated to the successor block "
+                                    + succ.toString()
+                                    + ", by rule: "
+                                    + rb.getFlowRule());
+                    System.out.println(currentInput.toString());
+
                     propagateStoresTo(
                             succ, lastNode, currentInput, rb.getFlowRule(), addToWorklistAgain);
                     break;
@@ -372,10 +384,12 @@ public class ForwardAnalysisImpl<
     protected TransferResult<V, S> callTransferFunction(Node node, TransferInput<V, S> input) {
         TransferResult<V, S> transferResult = super.callTransferFunction(node, input);
 
+        /*
         System.out.println("\n\n--------------------------------------------------------- ");
         System.out.println("node: " + node.toString());
         System.out.println("transfer result: " + transferResult.toString());
         System.out.println("---------------------------------------------------------\n\n");
+        */
 
         if (node instanceof ReturnNode) {
             // Save a copy of the store to later check if some property holds at a given return
