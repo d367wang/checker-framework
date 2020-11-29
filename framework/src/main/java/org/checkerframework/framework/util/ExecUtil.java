@@ -15,6 +15,10 @@ public class ExecUtil {
         final Redirection outRedirect = new Redirection(std, BLOCK_SIZE);
         final Redirection errRedirect = new Redirection(err, BLOCK_SIZE);
 
+        for (String arg : cmd) {
+            System.out.print(arg + " ");
+        }
+
         try {
             final Process proc = Runtime.getRuntime().exec(cmd);
             outRedirect.redirect(proc.getInputStream());

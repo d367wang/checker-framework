@@ -372,6 +372,9 @@ public class ForwardAnalysisImpl<
     protected TransferResult<V, S> callTransferFunction(Node node, TransferInput<V, S> input) {
         TransferResult<V, S> transferResult = super.callTransferFunction(node, input);
 
+        System.out.println("\n" + node.getClass().getSimpleName() + " " + node.toString() + ": ");
+        System.out.println(transferResult);
+
         if (node instanceof ReturnNode) {
             // Save a copy of the store to later check if some property holds at a given return
             // statement
