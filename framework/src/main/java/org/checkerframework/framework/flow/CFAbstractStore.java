@@ -110,6 +110,8 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
         arrayValues = new HashMap<>();
         classValues = new HashMap<>();
         this.sequentialSemantics = sequentialSemantics;
+
+        bottomValues = new HashMap<>();
     }
 
     /** Copy constructor. */
@@ -124,6 +126,7 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
         sequentialSemantics = other.sequentialSemantics;
 
         this.isBottom = other.isBottom;
+        bottomValues = new HashMap<>();
     }
 
     /**

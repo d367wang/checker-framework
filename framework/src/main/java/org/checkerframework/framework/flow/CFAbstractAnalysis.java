@@ -218,6 +218,9 @@ public abstract class CFAbstractAnalysis<
     }
 
     public BottomValue<V> createBottomValue(TypeMirror tm) {
-        return new BottomValue<>(this, null, tm);
+        @SuppressWarnings("unchecked")
+        Set<AnnotationMirror> bottomAnnotations =
+                (Set<AnnotationMirror>) qualifierHierarchy.getBottomAnnotations();
+        return new BottomValue<>(this, bottomAnnotations, tm);
     }
 }

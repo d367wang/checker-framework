@@ -4,15 +4,11 @@ import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.checkerframework.common.value.qual.BottomVal;
-import org.checkerframework.dataflow.qual.Pure;
-import org.checkerframework.dataflow.qual.SideEffectFree;
-import org.checkerframework.framework.type.QualifierHierarchy;
-import org.checkerframework.javacutil.AnnotationUtils;
 
+@SuppressWarnings("unchecked")
 public class BottomValue<V extends CFAbstractValue<V>> extends CFAbstractValue<V> {
 
-    protected final Set<AnnotationMirror> bottomAnnotations;
+    // protected final Set<AnnotationMirror> bottomAnnotations;
 
     protected BottomValue(
             CFAbstractAnalysis<V, ?, ?> analysis,
@@ -20,19 +16,18 @@ public class BottomValue<V extends CFAbstractValue<V>> extends CFAbstractValue<V
             TypeMirror underlyingType) {
         super(analysis, annotations, underlyingType);
 
-        QualifierHierarchy hierarchy = analysis.getTypeFactory().getQualifierHierarchy();
+        // QualifierHierarchy hierarchy = analysis.getTypeFactory().getQualifierHierarchy();
+        // this.bottomAnnotations = (Set<AnnotationMirror>) hierarchy.getBottomAnnotations();
 
+        /*
         this.bottomAnnotations = AnnotationUtils.createAnnotationSet();
         for (AnnotationMirror anno : annotations) {
             annotations.add(hierarchy.getBottomAnnotation(anno));
         }
+        */
     }
 
-    public Set<AnnotationMirror> getAnnotations() {
-        return bottomAnnotations;
-    }
-
-    @Pure
+    @Override
     public TypeMirror getUnderlyingType() {
         return underlyingType;
     }
@@ -54,12 +49,11 @@ public class BottomValue<V extends CFAbstractValue<V>> extends CFAbstractValue<V
      *
      * @return the string representation as a comma-separated list
      */
-    @SideEffectFree
     @Override
     public String toString() {
         return "BottomValue{"
                 + "bottom annotations="
-                + bottomAnnotations
+                + annotations
                 + ", underlyingType="
                 + underlyingType
                 + '}';
@@ -77,7 +71,7 @@ public class BottomValue<V extends CFAbstractValue<V>> extends CFAbstractValue<V
     private V upperBound(@Nullable V other, boolean shouldWiden) {
         // If the other value is null or is bottom value as well,
         // the lub is the bottom value.
-        if (other == null || other instanceof BottomVal) {
+        if (other == null || other instanceof BottomValue) {
             @SuppressWarnings("unchecked")
             V v = (V) this;
             return v;
