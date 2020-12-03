@@ -62,6 +62,8 @@ public class ForwardAnalysisImpl<
     /** The stores after every return statement. */
     protected final IdentityHashMap<ReturnNode, TransferResult<V, S>> storesAtReturnStatements;
 
+    protected boolean printTransferRes = false;
+
     // `@code`, not `@link`, because dataflow module doesn't depend on framework module.
     /**
      * Construct an object that can perform a org.checkerframework.dataflow forward analysis over a
@@ -372,8 +374,11 @@ public class ForwardAnalysisImpl<
     protected TransferResult<V, S> callTransferFunction(Node node, TransferInput<V, S> input) {
         TransferResult<V, S> transferResult = super.callTransferFunction(node, input);
 
-        System.out.println("\n" + node.getClass().getSimpleName() + " " + node.toString() + ": ");
-        System.out.println(transferResult);
+        if (this.printTransferRes) {
+            System.out.println(
+                    "\n" + node.getClass().getSimpleName() + " " + node.toString() + ": ");
+            System.out.println(transferResult);
+        }
 
         if (node instanceof ReturnNode) {
             // Save a copy of the store to later check if some property holds at a given return

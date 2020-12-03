@@ -39,6 +39,7 @@ import org.checkerframework.dataflow.cfg.UnderlyingAST.Kind;
 import org.checkerframework.dataflow.cfg.node.AbstractNodeVisitor;
 import org.checkerframework.dataflow.cfg.node.ArrayAccessNode;
 import org.checkerframework.dataflow.cfg.node.AssignmentNode;
+import org.checkerframework.dataflow.cfg.node.BooleanLiteralNode;
 import org.checkerframework.dataflow.cfg.node.CaseNode;
 import org.checkerframework.dataflow.cfg.node.ClassNameNode;
 import org.checkerframework.dataflow.cfg.node.ConditionalNotNode;
@@ -107,10 +108,13 @@ public abstract class CFAbstractTransfer<
     /** Indicates that the whole-program inference is on. */
     private final boolean infer;
 
+    private final boolean printTransferRes;
+
     protected CFAbstractTransfer(CFAbstractAnalysis<V, S, T> analysis) {
         this.analysis = analysis;
         this.sequentialSemantics = !analysis.checker.hasOption("concurrentSemantics");
         this.infer = analysis.checker.hasOption("infer");
+        this.printTransferRes = analysis.checker.hasOption("printTransferRes");
     }
 
     /**
@@ -128,6 +132,7 @@ public abstract class CFAbstractTransfer<
         this.sequentialSemantics =
                 !(forceConcurrentSemantics || analysis.checker.hasOption("concurrentSemantics"));
         this.infer = analysis.checker.hasOption("infer");
+        this.printTransferRes = analysis.checker.hasOption("printTransferRes");
     }
 
     /**
@@ -1207,5 +1212,23 @@ public abstract class CFAbstractTransfer<
         TransferResult<V, S> result = super.visitStringConversion(n, p);
         result.setResultValue(p.getValueOfSubNode(n.getOperand()));
         return result;
+    }
+
+    @Override
+    public TransferResult<V, S> visitBooleanLiteral(BooleanLiteralNode n, TransferInput<V, S> p) {
+        S thenStore, elseStore;
+
+        TransferResult<V, S> result = super.visitBooleanLiteral(n, p);
+        thenStore = result.getThenStore();
+        elseStore = result.getElseStore();
+
+        if (n.getValue()) {
+            elseStore.setBottom();
+
+        } else {
+            thenStore.setBottom();
+        }
+
+        return new ConditionalTransferResult<>(result.getResultValue(), thenStore, elseStore);
     }
 }

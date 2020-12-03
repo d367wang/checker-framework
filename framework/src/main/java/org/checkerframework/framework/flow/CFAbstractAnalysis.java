@@ -90,6 +90,8 @@ public abstract class CFAbstractAnalysis<
         this.transferFunction = createTransferFunction();
         // TODO: remove parameter and set to empty list.
         this.fieldValues = fieldValues;
+
+        this.printTransferRes = checker.hasOption("printTransferRes");
     }
 
     protected CFAbstractAnalysis(
@@ -213,5 +215,9 @@ public abstract class CFAbstractAnalysis<
      */
     public ProcessingEnvironment getEnv() {
         return env;
+    }
+
+    public BottomValue<V> createBottomValue(TypeMirror tm) {
+        return new BottomValue<>(this, null, tm);
     }
 }

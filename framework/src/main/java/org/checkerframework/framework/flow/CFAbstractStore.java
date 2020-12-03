@@ -93,6 +93,10 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
      */
     protected final boolean sequentialSemantics;
 
+    private boolean isBottom = false;
+
+    protected Map<TypeMirror, BottomValue<V>> bottomValues;
+
     /* --------------------------------------------------------- */
     /* Initialization */
     /* --------------------------------------------------------- */
@@ -118,6 +122,8 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
         arrayValues = new HashMap<>(other.arrayValues);
         classValues = new HashMap<>(other.classValues);
         sequentialSemantics = other.sequentialSemantics;
+
+        this.isBottom = other.isBottom;
     }
 
     /**
@@ -340,10 +346,20 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
             // Expressions containing unknown expressions are not stored.
             return;
         }
+
+        if (this.isBottom()) {
+            return;
+        }
+
         if (r instanceof FlowExpressions.LocalVariable) {
             FlowExpressions.LocalVariable localVar = (FlowExpressions.LocalVariable) r;
             V oldValue = localVariableValues.get(localVar);
             V newValue = value.mostSpecific(oldValue, null);
+
+            //            System.out.println("local var: " + localVar.toString());
+            //            System.out.println("oldValue: " + oldValue.toString());
+            //            System.out.println("newValue: " + newValue.toString());
+
             if (newValue != null) {
                 localVariableValues.put(localVar, newValue);
             }
@@ -445,6 +461,10 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
             return;
         }
 
+        if (this.isBottom()) {
+            return;
+        }
+
         V value = analysis.createSingleAnnotationValue(a, underlyingType);
 
         V oldValue = thisValue;
@@ -472,6 +492,10 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
      * information depending on the type of the expression {@code r}).
      */
     public void clearValue(FlowExpressions.Receiver r) {
+        if (this.isBottom()) {
+            return;
+        }
+
         if (r.containsUnknown()) {
             // Expressions containing unknown expressions are not stored.
             return;
@@ -504,6 +528,10 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
      *     available
      */
     public @Nullable V getValue(FlowExpressions.Receiver expr) {
+        if (this.isBottom()) {
+            return getBottomValue(expr);
+        }
+
         if (expr instanceof FlowExpressions.LocalVariable) {
             FlowExpressions.LocalVariable localVar = (FlowExpressions.LocalVariable) expr;
             return localVariableValues.get(localVar);
@@ -536,6 +564,11 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
     public @Nullable V getValue(FieldAccessNode n) {
         FlowExpressions.FieldAccess fieldAccess =
                 FlowExpressions.internalReprOfFieldAccess(analysis.getTypeFactory(), n);
+
+        if (this.isBottom()) {
+            return getBottomValue(fieldAccess);
+        }
+
         return fieldValues.get(fieldAccess);
     }
 
@@ -548,6 +581,11 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
      */
     public @Nullable V getValue(MethodInvocationNode n) {
         Receiver method = FlowExpressions.internalReprOf(analysis.getTypeFactory(), n, true);
+
+        if (this.isBottom()) {
+            return getBottomValue(method);
+        }
+
         if (method == null) {
             return null;
         }
@@ -564,11 +602,20 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
     public @Nullable V getValue(ArrayAccessNode n) {
         FlowExpressions.ArrayAccess arrayAccess =
                 FlowExpressions.internalReprOfArrayAccess(analysis.getTypeFactory(), n);
+
+        if (this.isBottom()) {
+            return getBottomValue(arrayAccess);
+        }
+
         return arrayValues.get(arrayAccess);
     }
 
     /** Update the information in the store by considering an assignment with target {@code n}. */
     public void updateForAssignment(Node n, @Nullable V val) {
+        if (this.isBottom()) {
+            return;
+        }
+
         Receiver receiver = FlowExpressions.internalReprOf(analysis.getTypeFactory(), n);
         if (receiver instanceof ArrayAccess) {
             updateForArrayAssignment((ArrayAccess) receiver, val);
@@ -823,6 +870,11 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
      */
     public @Nullable V getValue(LocalVariableNode n) {
         Element el = n.getElement();
+
+        if (this.isBottom()) {
+            return getBottomValue(el.asType());
+        }
+
         return localVariableValues.get(new FlowExpressions.LocalVariable(el));
     }
 
@@ -838,6 +890,10 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
      *     available
      */
     public @Nullable V getValue(ThisLiteralNode n) {
+        if (this.isBottom()) {
+            return getBottomValue(thisValue.underlyingType);
+        }
+
         return thisValue;
     }
 
@@ -862,6 +918,20 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
     }
 
     private S upperBound(S other, boolean shouldWiden) {
+        if (this.isBottom() && other.isBottom()) {
+            S newStore = analysis.createEmptyStore(sequentialSemantics);
+            newStore.setBottom();
+            return newStore;
+        }
+
+        if (this.isBottom()) {
+            return analysis.createCopiedStore(other);
+        }
+
+        if (other.isBottom()) {
+            return copy();
+        }
+
         S newStore = analysis.createEmptyStore(sequentialSemantics);
 
         for (Map.Entry<FlowExpressions.LocalVariable, V> e : other.localVariableValues.entrySet()) {
@@ -1000,7 +1070,13 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
         if (o instanceof CFAbstractStore) {
             @SuppressWarnings("unchecked")
             CFAbstractStore<V, S> other = (CFAbstractStore<V, S>) o;
-            return this.supersetOf(other) && other.supersetOf(this);
+
+            if (!this.isBottom() && !other.isBottom()) {
+                return this.supersetOf(other) && other.supersetOf(this);
+            }
+
+            return this.isBottom() && other.isBottom();
+
         } else {
             return false;
         }
@@ -1038,6 +1114,11 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
      */
     protected String internalVisualize(CFGVisualizer<V, S, ?> viz) {
         StringBuilder res = new StringBuilder();
+
+        if (this.isBottom()) {
+            return "";
+        }
+
         for (Map.Entry<FlowExpressions.LocalVariable, V> entry : localVariableValues.entrySet()) {
             res.append(viz.visualizeStoreLocalVar(entry.getKey(), entry.getValue()));
         }
@@ -1057,5 +1138,33 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
             res.append(viz.visualizeStoreClassVals(entry.getKey(), entry.getValue()));
         }
         return res.toString();
+    }
+
+    public boolean isBottom() {
+        return isBottom;
+    }
+
+    public void setBottom() {
+        this.isBottom = true;
+    }
+
+    private V getBottomValue(FlowExpressions.Receiver receiver) {
+        TypeMirror type = receiver.getType();
+        return getBottomValue(type);
+    }
+
+    private V getBottomValue(TypeMirror type) {
+        for (Map.Entry<TypeMirror, BottomValue<V>> entry : bottomValues.entrySet()) {
+            TypeMirror tm = entry.getKey();
+            if (analysis.getTypes().isSameType(tm, type)) {
+                @SuppressWarnings("unchecked")
+                V value = (V) entry.getValue();
+            }
+        }
+        BottomValue<V> bottomValue = analysis.createBottomValue(type);
+        bottomValues.put(type, bottomValue);
+        @SuppressWarnings("unchecked")
+        V value = (V) bottomValue;
+        return value;
     }
 }
