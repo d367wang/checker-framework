@@ -897,7 +897,7 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
      */
     public @Nullable V getValue(ThisLiteralNode n) {
         if (this.isBottom()) {
-            return getBottomValue(thisValue.underlyingType);
+            return getBottomValue(n.getType());
         }
 
         return thisValue;
