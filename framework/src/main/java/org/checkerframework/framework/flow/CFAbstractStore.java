@@ -869,13 +869,16 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
      *     available
      */
     public @Nullable V getValue(LocalVariableNode n) {
-        Element el = n.getElement();
+        // Element el = n.getElement();
+        // return localVariableValues.get(new FlowExpressions.LocalVariable(el));
 
+        Element el = n.getElement();
+        LocalVariable localVar = new LocalVariable(el);
         if (this.isBottom()) {
-            return getBottomValue(el.asType());
+            return getBottomValue(localVar);
         }
 
-        return localVariableValues.get(new FlowExpressions.LocalVariable(el));
+        return localVariableValues.get(localVar);
     }
 
     /* --------------------------------------------------------- */
@@ -1101,7 +1104,14 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
         @SuppressWarnings("unchecked")
         CFGVisualizer<V, S, ?> castedViz = (CFGVisualizer<V, S, ?>) viz;
         StringBuilder sbVisualize = new StringBuilder();
-        sbVisualize.append(castedViz.visualizeStoreHeader(this.getClass().getCanonicalName()));
+        if (this.isBottom()) {
+            sbVisualize.append(castedViz.visualizeStoreHeader("BottomStore"));
+
+        } else {
+            sbVisualize.append(castedViz.visualizeStoreHeader(this.getClass().getCanonicalName()));
+        }
+
+        // sbVisualize.append(castedViz.visualizeStoreHeader(this.getClass().getCanonicalName()));
         sbVisualize.append(internalVisualize(castedViz));
         sbVisualize.append(castedViz.visualizeStoreFooter());
         return sbVisualize.toString();
