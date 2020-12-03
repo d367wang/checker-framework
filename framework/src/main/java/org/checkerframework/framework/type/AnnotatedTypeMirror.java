@@ -33,10 +33,7 @@ import org.checkerframework.dataflow.qual.SideEffectFree;
 import org.checkerframework.framework.type.visitor.AnnotatedTypeVisitor;
 import org.checkerframework.framework.type.visitor.SimpleAnnotatedTypeScanner;
 import org.checkerframework.framework.util.AnnotatedTypes;
-import org.checkerframework.javacutil.AnnotationBuilder;
-import org.checkerframework.javacutil.AnnotationUtils;
-import org.checkerframework.javacutil.BugInCF;
-import org.checkerframework.javacutil.ElementUtils;
+import org.checkerframework.javacutil.*;
 
 /**
  * Represents an annotated type in the Java programming language. Types include primitive types,
@@ -150,7 +147,7 @@ public abstract class AnnotatedTypeMirror {
      *     Elements, ...)
      */
     private AnnotatedTypeMirror(TypeMirror type, AnnotatedTypeFactory atypeFactory) {
-        this.actualType = type;
+        this.actualType = TypeAnnotationUtils.unannotatedType(type);
         assert atypeFactory != null;
         this.atypeFactory = atypeFactory;
     }

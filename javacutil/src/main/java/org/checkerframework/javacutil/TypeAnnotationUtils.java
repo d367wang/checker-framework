@@ -5,6 +5,7 @@ import com.sun.tools.javac.code.Attribute.TypeCompound;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.TypeAnnotationPosition;
+import com.sun.tools.javac.code.TypeTag;
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
@@ -548,6 +549,9 @@ public class TypeAnnotationUtils {
             // TODO: file an issue that stripMetadata doesn't work for primitives.
             // See eisop/checker-framework issue #21.
             return impl.baseType();
+        } else if (impl.hasTag(TypeTag.METHOD)) {
+            // As an method type can't have type annotations, do nothing
+            return impl;
         } else {
             return impl.stripMetadata();
         }
