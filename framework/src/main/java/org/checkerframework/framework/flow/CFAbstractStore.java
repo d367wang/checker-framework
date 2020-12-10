@@ -11,6 +11,7 @@ import javax.lang.model.element.Name;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.dataflow.analysis.BottomStore;
 import org.checkerframework.dataflow.analysis.FlowExpressions;
 import org.checkerframework.dataflow.analysis.FlowExpressions.ArrayAccess;
 import org.checkerframework.dataflow.analysis.FlowExpressions.ClassName;
@@ -54,7 +55,7 @@ import org.checkerframework.javacutil.Pair;
 // TODO: this class should be split into parts that are reusable generally, and
 // parts specific to the checker framework
 public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CFAbstractStore<V, S>>
-        implements Store<S> {
+        implements Store<S>, BottomStore<V, S> {
 
     /** The analysis class this store belongs to. */
     protected final CFAbstractAnalysis<V, S, ?> analysis;
@@ -567,12 +568,7 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
     public @Nullable V getValue(FieldAccessNode n) {
         FlowExpressions.FieldAccess fieldAccess =
                 FlowExpressions.internalReprOfFieldAccess(analysis.getTypeFactory(), n);
-
-        if (this.isBottom()) {
-            return getBottomValue(fieldAccess);
-        }
-
-        return fieldValues.get(fieldAccess);
+        return getValue(fieldAccess);
     }
 
     /**
@@ -584,15 +580,10 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
      */
     public @Nullable V getValue(MethodInvocationNode n) {
         Receiver method = FlowExpressions.internalReprOf(analysis.getTypeFactory(), n, true);
-
-        if (this.isBottom()) {
-            return getBottomValue(method);
-        }
-
         if (method == null) {
             return null;
         }
-        return methodValues.get(method);
+        return getValue(method);
     }
 
     /**
@@ -605,12 +596,7 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
     public @Nullable V getValue(ArrayAccessNode n) {
         FlowExpressions.ArrayAccess arrayAccess =
                 FlowExpressions.internalReprOfArrayAccess(analysis.getTypeFactory(), n);
-
-        if (this.isBottom()) {
-            return getBottomValue(arrayAccess);
-        }
-
-        return arrayValues.get(arrayAccess);
+        return getValue(arrayAccess);
     }
 
     /** Update the information in the store by considering an assignment with target {@code n}. */
@@ -872,16 +858,9 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
      *     available
      */
     public @Nullable V getValue(LocalVariableNode n) {
-        // Element el = n.getElement();
-        // return localVariableValues.get(new FlowExpressions.LocalVariable(el));
-
         Element el = n.getElement();
         LocalVariable localVar = new LocalVariable(el);
-        if (this.isBottom()) {
-            return getBottomValue(localVar);
-        }
-
-        return localVariableValues.get(localVar);
+        return getValue(localVar);
     }
 
     /* --------------------------------------------------------- */
@@ -899,7 +878,6 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
         if (this.isBottom()) {
             return getBottomValue(n.getType());
         }
-
         return thisValue;
     }
 
@@ -924,18 +902,11 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
     }
 
     private S upperBound(S other, boolean shouldWiden) {
-        if (this.isBottom() && other.isBottom()) {
-            S newStore = analysis.createEmptyStore(sequentialSemantics);
-            newStore.setBottom();
-            return newStore;
-        }
-
-        if (this.isBottom()) {
-            return analysis.createCopiedStore(other);
-        }
-
         if (other.isBottom()) {
-            return copy();
+            return lubWithBottom();
+        }
+        if (this.isBottom()) {
+            return other.lubWithBottom();
         }
 
         S newStore = analysis.createEmptyStore(sequentialSemantics);
@@ -1166,18 +1137,30 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
         return getBottomValue(type);
     }
 
-    private V getBottomValue(TypeMirror type) {
+    @Override
+    public V getBottomValue(TypeMirror underlyingType) {
         for (Map.Entry<TypeMirror, BottomValue<V>> entry : bottomValues.entrySet()) {
             TypeMirror tm = entry.getKey();
-            if (analysis.getTypes().isSameType(tm, type)) {
+            if (analysis.getTypes().isSameType(tm, underlyingType)) {
                 @SuppressWarnings("unchecked")
                 V value = (V) entry.getValue();
+                return value;
             }
         }
-        BottomValue<V> bottomValue = analysis.createBottomValue(type);
-        bottomValues.put(type, bottomValue);
+        BottomValue<V> bottomValue = analysis.createBottomValue(underlyingType);
+        bottomValues.put(underlyingType, bottomValue);
         @SuppressWarnings("unchecked")
         V value = (V) bottomValue;
         return value;
+    }
+
+    @Override
+    public S lubWithBottom() {
+        if (this.isBottom()) {
+            S newStore = analysis.createEmptyStore(sequentialSemantics);
+            newStore.setBottom();
+            return newStore;
+        }
+        return copy();
     }
 }
