@@ -3121,6 +3121,35 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
     }
 
     /**
+     * Create an artificial tree path for an artificial tree.
+     *
+     * <p>See {@code
+     * org.checkerframework.framework.flow.CFCFGBuilder.CFCFGTranslationPhaseOne.handleArtificialTree(Tree)}.
+     *
+     * @param node the artificial {@link Tree} to create path for
+     * @param path the {@link TreePath} of the artificial tree
+     */
+    public void createTreePathForArtificialTree(Tree node, TreePath path) {
+        System.out.println("create artificial tree: " + node + ", path: ");
+        printTreePath(path);
+        treePathCache.addPath(node, path);
+    }
+
+    public void printTreePath(TreePath path) {
+        Iterator<Tree> iter = path.iterator();
+        StringBuilder sb = new StringBuilder();
+        while (iter.hasNext()) {
+            Tree curr = iter.next();
+            if (curr.getKind() == Tree.Kind.METHOD) {
+                break;
+            }
+            sb.append(curr);
+            sb.append(" --> \n");
+        }
+        System.out.println(sb.toString());
+    }
+
+    /**
      * Assert that the type is a type of valid type mirror, i.e. not an ERROR or OTHER type.
      *
      * @param type an annotated type

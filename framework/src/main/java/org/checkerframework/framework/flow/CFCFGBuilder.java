@@ -8,6 +8,7 @@ import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
+import com.sun.source.util.TreePath;
 import java.util.Collection;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
@@ -124,6 +125,9 @@ public class CFCFGBuilder extends CFGBuilder {
                     Element classElement = TreeUtils.elementFromDeclaration(enclosingClass);
                     factory.setEnclosingElementForArtificialTree(tree, classElement);
                 }
+            }
+            if (factory.getEnclosingElementForArtificialTree(tree) != null) {
+                factory.createTreePathForArtificialTree(tree, getCurrentPath());
             }
         }
 
