@@ -4759,9 +4759,10 @@ public class CFGBuilder {
                                             uniqueName("tempPostfix"),
                                             findOwner(),
                                             tree.getExpression());
-                            TreePath tempVarPath =
-                                    TreePath.getPath(getCurrentPath(), tree.getExpression());
-                            handleArtificialTree(tempVarDecl, tempVarPath);
+                            // TreePath tempVarPath =
+                            //        TreePath.getPath(getCurrentPath(), tree.getExpression());
+                            // handleArtificialTree(tempVarDecl, tempVarPath);
+                            handleArtificialTree(tempVarDecl);
                             VariableDeclarationNode tempVarDeclNode =
                                     new VariableDeclarationNode(tempVarDecl);
                             tempVarDeclNode.setInSource(false);
@@ -4774,7 +4775,7 @@ public class CFGBuilder {
                             extendWithNode(tempVarNode);
 
                             AssignmentNode tempAssignNode =
-                                    new AssignmentNode(tempVarDecl, tempVarNode, expr);
+                                    new AssignmentNode(tree, tempVarNode, expr);
                             tempAssignNode.setInSource(false);
                             extendWithNode(tempAssignNode);
 
@@ -4850,7 +4851,8 @@ public class CFGBuilder {
 
             if (target == null) {
                 target = treeBuilder.buildAssignment(exprTree, (ExpressionTree) narrowed.getTree());
-                handleArtificialTree(target);
+                // handleArtificialTree(target);
+                handleArtificialTree(target, TreePath.getPath(getCurrentPath(), exprTree));
             }
 
             AssignmentNode assignNode = new AssignmentNode(target, expr, narrowed);

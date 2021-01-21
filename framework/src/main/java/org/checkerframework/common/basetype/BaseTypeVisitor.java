@@ -2388,8 +2388,6 @@ public class BaseTypeVisitor<Factory extends GenericAnnotatedTypeFactory<?, ?, ?
             return;
         }
         AnnotatedTypeMirror valueType = atypeFactory.getAnnotatedType(valueExp);
-        System.out.println(
-                "commonAssignmentCheck: rhs tree - " + valueExp + ", rhs atm - " + valueType);
         assert valueType != null : "null type for expression: " + valueExp;
         commonAssignmentCheck(varType, valueType, valueExp, errorKey);
     }
