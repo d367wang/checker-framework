@@ -114,6 +114,11 @@ public class CFCFGBuilder extends CFGBuilder {
 
         @Override
         public void handleArtificialTree(Tree tree) {
+            handleArtificialTree(tree, getCurrentPath());
+        }
+
+        @Override
+        public void handleArtificialTree(Tree tree, TreePath path) {
             // Record the method or class that encloses the newly created tree.
             MethodTree enclosingMethod = TreeUtils.enclosingMethod(getCurrentPath());
             if (enclosingMethod != null) {
@@ -126,8 +131,12 @@ public class CFCFGBuilder extends CFGBuilder {
                     factory.setEnclosingElementForArtificialTree(tree, classElement);
                 }
             }
+
+            if (path == null) {
+                path = getCurrentPath();
+            }
             if (factory.getEnclosingElementForArtificialTree(tree) != null) {
-                factory.createTreePathForArtificialTree(tree, getCurrentPath());
+                factory.createTreePathForArtificialTree(tree, path);
             }
         }
 

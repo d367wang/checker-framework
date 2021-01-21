@@ -1721,6 +1721,15 @@ public class CFGBuilder {
          */
         public void handleArtificialTree(Tree tree) {}
 
+        /**
+         * Perform any actions required when CFG translation creates a new Tree that is not part of
+         * the original AST.
+         *
+         * @param tree the newly created Tree
+         * @param path tree path to the newly created Tree
+         */
+        public void handleArtificialTree(Tree tree, TreePath path) {}
+
         /* --------------------------------------------------------- */
         /* Nodes and Labels Management */
         /* --------------------------------------------------------- */
@@ -4750,7 +4759,9 @@ public class CFGBuilder {
                                             uniqueName("tempPostfix"),
                                             findOwner(),
                                             tree.getExpression());
-                            handleArtificialTree(tempVarDecl);
+                            TreePath tempVarPath =
+                                    TreePath.getPath(getCurrentPath(), tree.getExpression());
+                            handleArtificialTree(tempVarDecl, tempVarPath);
                             VariableDeclarationNode tempVarDeclNode =
                                     new VariableDeclarationNode(tempVarDecl);
                             tempVarDeclNode.setInSource(false);
@@ -4763,7 +4774,7 @@ public class CFGBuilder {
                             extendWithNode(tempVarNode);
 
                             AssignmentNode tempAssignNode =
-                                    new AssignmentNode(tree, tempVarNode, expr);
+                                    new AssignmentNode(tempVarDecl, tempVarNode, expr);
                             tempAssignNode.setInSource(false);
                             extendWithNode(tempAssignNode);
 
