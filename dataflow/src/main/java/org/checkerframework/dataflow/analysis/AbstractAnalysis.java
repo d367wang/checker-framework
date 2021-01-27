@@ -3,6 +3,7 @@ package org.checkerframework.dataflow.analysis;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
+import com.sun.source.tree.UnaryTree;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -416,6 +417,17 @@ public abstract class AbstractAnalysis<
         if (!worklist.contains(b)) {
             worklist.add(b);
         }
+    }
+
+    public UnaryTree getUnaryTreeForAssign(AssignmentNode node) {
+        IdentityHashMap<UnaryTree, AssignmentNode> unaryAssignNodeLookup =
+                cfg.getUnaryAssignNodeLookup();
+        for (Map.Entry<UnaryTree, AssignmentNode> entry : unaryAssignNodeLookup.entrySet()) {
+            if (entry.getValue() == node) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
     /**
