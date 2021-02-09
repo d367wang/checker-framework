@@ -15,6 +15,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.dataflow.cfg.CFGBuilder;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
@@ -112,31 +113,26 @@ public class CFCFGBuilder extends CFGBuilder {
             return super.assumeAssertionsEnabledFor(tree);
         }
 
+        /** {@inheritDoc} */
         @Override
         public void handleArtificialTree(Tree tree) {
             handleArtificialTree(tree, getCurrentPath());
         }
 
+        /** {@inheritDoc} */
         @Override
-        public void handleArtificialTree(Tree tree, TreePath path) {
+        public void handleArtificialTree(Tree tree, @NonNull TreePath path) {
             // Record the method or class that encloses the newly created tree.
             MethodTree enclosingMethod = TreeUtils.enclosingMethod(getCurrentPath());
             if (enclosingMethod != null) {
                 Element methodElement = TreeUtils.elementFromDeclaration(enclosingMethod);
-                factory.setEnclosingElementForArtificialTree(tree, methodElement);
-            } else {
-                ClassTree enclosingClass = TreeUtils.enclosingClass(getCurrentPath());
-                if (enclosingClass != null) {
-                    Element classElement = TreeUtils.elementFromDeclaration(enclosingClass);
-                    factory.setEnclosingElementForArtificialTree(tree, classElement);
-                }
+                factory.setEnclosingElementForArtificialTree(tree, path, methodElement);
+                return;
             }
-
-            if (path == null) {
-                path = getCurrentPath();
-            }
-            if (factory.getEnclosingElementForArtificialTree(tree) != null) {
-                factory.createTreePathForArtificialTree(tree, path);
+            ClassTree enclosingClass = TreeUtils.enclosingClass(getCurrentPath());
+            if (enclosingClass != null) {
+                Element classElement = TreeUtils.elementFromDeclaration(enclosingClass);
+                factory.setEnclosingElementForArtificialTree(tree, path, classElement);
             }
         }
 

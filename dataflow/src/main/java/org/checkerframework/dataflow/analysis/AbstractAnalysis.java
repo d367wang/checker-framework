@@ -86,6 +86,9 @@ public abstract class AbstractAnalysis<
     /** The current transfer input when the analysis is running. */
     protected @Nullable TransferInput<V, S> currentInput;
 
+    /** Map from {@link AssignmentNode}s to AST {@link UnaryTree}s. */
+    protected final IdentityHashMap<AssignmentNode, UnaryTree> assignNodeUnaryLookupMap;
+
     /**
      * Returns the tree that is currently being looked at. The transfer function can set this tree
      * to make sure that calls to {@code getValue} will not return information for this given tree.
@@ -117,6 +120,7 @@ public abstract class AbstractAnalysis<
         this.worklist = new Worklist(this.direction);
         this.nodeValues = new IdentityHashMap<>();
         this.finalLocalValues = new HashMap<>();
+        this.assignNodeUnaryLookupMap = new IdentityHashMap<>();
     }
 
     /** Initialize the transfer inputs of every basic block before performing the analysis. */
@@ -252,6 +256,28 @@ public abstract class AbstractAnalysis<
         return cfg.getNodesCorrespondingToTree(t);
     }
 
+    private void initAssignNodeUnaryLookupMap() {
+        if (cfg == null) {
+            return;
+        }
+
+        for (Map.Entry<UnaryTree, AssignmentNode> entry :
+                cfg.getUnaryAssignNodeLookup().entrySet()) {
+            assert entry.getValue() != null;
+            assignNodeUnaryLookupMap.put(entry.getValue(), entry.getKey());
+        }
+    }
+
+    /**
+     * Returns the corresponding {@link UnaryTree} for a given {@link AssignmentNode}.
+     *
+     * @param node an assignment node
+     * @return the corresponding unary tree, or null if it {@code node} is not from a unary tree
+     */
+    public UnaryTree getUnaryTreeForAssign(AssignmentNode node) {
+        return assignNodeUnaryLookupMap.get(node);
+    }
+
     /**
      * Return the abstract value for {@link Tree} {@code t}, or {@code null} if no information is
      * available. Note that if the analysis has not finished yet, this value might not represent the
@@ -358,6 +384,7 @@ public abstract class AbstractAnalysis<
     protected final void init(ControlFlowGraph cfg) {
         initFields(cfg);
         initInitialInputs();
+        initAssignNodeUnaryLookupMap();
     }
 
     /**
@@ -417,17 +444,6 @@ public abstract class AbstractAnalysis<
         if (!worklist.contains(b)) {
             worklist.add(b);
         }
-    }
-
-    public UnaryTree getUnaryTreeForAssign(AssignmentNode node) {
-        IdentityHashMap<UnaryTree, AssignmentNode> unaryAssignNodeLookup =
-                cfg.getUnaryAssignNodeLookup();
-        for (Map.Entry<UnaryTree, AssignmentNode> entry : unaryAssignNodeLookup.entrySet()) {
-            if (entry.getValue() == node) {
-                return entry.getKey();
-            }
-        }
-        return null;
     }
 
     /**

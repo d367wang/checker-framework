@@ -91,6 +91,7 @@ import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.UnionType;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Store;
 import org.checkerframework.dataflow.cfg.CFGBuilder.ExtendedNode.ExtendedNodeType;
@@ -1723,12 +1724,13 @@ public class CFGBuilder {
 
         /**
          * Perform any actions required when CFG translation creates a new Tree that is not part of
-         * the original AST.
+         * the original AST. This method is an supplement to the one-arg version of {@code
+         * handleArtificialTree} above.
          *
          * @param tree the newly created Tree
          * @param path tree path to the newly created Tree
          */
-        public void handleArtificialTree(Tree tree, TreePath path) {}
+        public void handleArtificialTree(Tree tree, @NonNull TreePath path) {}
 
         /* --------------------------------------------------------- */
         /* Nodes and Labels Management */
@@ -4759,9 +4761,6 @@ public class CFGBuilder {
                                             uniqueName("tempPostfix"),
                                             findOwner(),
                                             tree.getExpression());
-                            // TreePath tempVarPath =
-                            //        TreePath.getPath(getCurrentPath(), tree.getExpression());
-                            // handleArtificialTree(tempVarDecl, tempVarPath);
                             handleArtificialTree(tempVarDecl);
                             VariableDeclarationNode tempVarDeclNode =
                                     new VariableDeclarationNode(tempVarDecl);
@@ -4851,7 +4850,6 @@ public class CFGBuilder {
 
             if (target == null) {
                 target = treeBuilder.buildAssignment(exprTree, (ExpressionTree) narrowed.getTree());
-                // handleArtificialTree(target);
                 handleArtificialTree(target, TreePath.getPath(getCurrentPath(), exprTree));
             }
 
