@@ -91,7 +91,6 @@ import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.UnionType;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Store;
 import org.checkerframework.dataflow.cfg.CFGBuilder.ExtendedNode.ExtendedNodeType;
@@ -1725,12 +1724,13 @@ public class CFGBuilder {
         /**
          * Perform any actions required when CFG translation creates a new Tree that is not part of
          * the original AST. This method is an supplement to the one-arg version of {@code
-         * handleArtificialTree} above.
+         * handleArtificialTree} above, in order to be able to specify {@link TreePath} for the
+         * given artificial tree instead of using default.
          *
-         * @param tree the newly created Tree
-         * @param path tree path to the newly created Tree
+         * @param tree the newly created artificial tree
+         * @param path the {@link TreePath} attached to the artificial tree
          */
-        public void handleArtificialTree(Tree tree, @NonNull TreePath path) {}
+        public void handleArtificialTree(Tree tree, TreePath path) {}
 
         /* --------------------------------------------------------- */
         /* Nodes and Labels Management */

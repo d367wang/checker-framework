@@ -3117,6 +3117,10 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
      *
      * <p>See {@code
      * org.checkerframework.framework.flow.CFCFGBuilder.CFCFGTranslationPhaseOne.handleArtificialTree(Tree)}.
+     *
+     * @param node the {@link Tree} to set the enclosing element to
+     * @param path the {@link TreePath} to attached to {@code node}
+     * @param enclosing the enclosing {@link Element} for {@code node}
      */
     public final void setEnclosingElementForArtificialTree(
             Tree node, TreePath path, Element enclosing) {
