@@ -4850,7 +4850,8 @@ public class CFGBuilder {
 
             if (target == null) {
                 target = treeBuilder.buildAssignment(exprTree, (ExpressionTree) narrowed.getTree());
-                handleArtificialTree(target, TreePath.getPath(getCurrentPath(), exprTree));
+                handleArtificialTree(target);
+//                handleArtificialTree(target, TreePath.getPath(getCurrentPath(), exprTree));
             }
 
             AssignmentNode assignNode = new AssignmentNode(target, expr, narrowed);
